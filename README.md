@@ -87,4 +87,3 @@ npm start
 ## 👨‍💻 Author
 **Anto SJ** - [GitHub](https://github.com/antosujesh)
 
-*Follow-up AI: Effortless project management, powered by intelligence.*
