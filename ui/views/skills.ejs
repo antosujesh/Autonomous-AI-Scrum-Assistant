@@ -1,0 +1,165 @@
+<%- include('partials/head') %>
+
+<!-- Header Action -->
+<div class="glass-card" style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem;">
+    <div>
+        <h2 style="margin:0; font-size: 1.25rem; font-family: 'Outfit', sans-serif;">Brain Skills</h2>
+        <p style="margin:0; font-size: 0.85rem; color: var(--text-muted);">Manage standard operating procedures for the AI.</p>
+    </div>
+    <button class="btn btn-primary" onclick="openModal('addSkillModal')">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        Create Skill
+    </button>
+</div>
+
+<!-- Skills Grid -->
+<div class="skills-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 1.5rem;">
+    <% if (skills.length === 0) { %>
+        <div class="glass-card" style="grid-column: 1/-1; text-align: center; padding: 5rem 2rem; border: 2px dashed var(--border);">
+            <div style="font-size: 3.5rem; margin-bottom: 1.5rem; filter: drop-shadow(0 0 10px rgba(79,70,229,0.2));">🧠</div>
+            <h2 style="margin-bottom: 0.75rem; font-family: 'Outfit', sans-serif;">No Skills Configured</h2>
+            <p style="color: var(--text-muted); max-width: 450px; margin: 0 auto 2rem; line-height: 1.6;">
+                Skills provide the AI with specialized knowledge or procedural instructions to handle specific WhatsApp requests expertly.
+            </p>
+            <button class="btn btn-primary" onclick="openModal('addSkillModal')">Add Your First Skill</button>
+        </div>
+    <% } %>
+
+    <% skills.forEach(skill => { %>
+        <div class="glass-card" style="display: flex; flex-direction: column; height: 100%; transition: all 0.3s ease; position: relative; overflow: hidden;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                <div>
+                    <h3 style="margin:0; font-family: 'Outfit', sans-serif; color: var(--text);"><%= skill.Name %></h3>
+                </div>
+                <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
+                    <form action="/skills/toggle/<%= skill.Id %>" method="POST" id="toggle-form-<%= skill.Id %>">
+                        <label class="switch">
+                            <input type="checkbox" name="isEnabled" <%= skill.IsEnabled ? 'checked' : '' %> onchange="document.getElementById('toggle-form-<%= skill.Id %>').submit()">
+                            <span class="slider round"></span>
+                        </label>
+                    </form>
+                    <% if(skill.IsAdminOnly) { %>
+                        <span class="badge badge-primary" style="font-size: 0.6rem;">ADMIN ONLY</span>
+                    <% } %>
+                </div>
+            </div>
+
+            <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.5rem; line-height: 1.5; flex-grow: 1;">
+                <%= skill.Description || 'No description provided.' %>
+            </p>
+
+            <div style="padding: 1rem; background: rgba(0,0,0,0.03); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 1.5rem; max-height: 120px; overflow: hidden; position: relative;">
+                <code style="font-size: 0.8rem; color: var(--text); white-space: pre-wrap; font-family: 'JetBrains Mono', 'Fira Code', monospace;"><%= skill.Content %></code>
+                <div style="position: absolute; bottom: 0; left: 0; right: 0; height: 50%; background: linear-gradient(transparent, rgba(255,255,255,0.9)); pointer-events: none;"></div>
+            </div>
+
+            <div style="display: flex; gap: 0.75rem; margin-top: auto; padding-top: 1.25rem; border-top: 1px solid var(--border);">
+                <button class="btn btn-ghost" style="flex: 1; font-size: 0.85rem; font-weight: 600;" onclick="editSkill('<%= skill.Id %>', '<%= skill.Name.replace(/'/g, "\\'") %>', '<%= skill.Description.replace(/'/g, "\\'") %>', `<%= skill.Content.replace(/`/g, "\\`") %>`, <%= skill.IsAdminOnly %>)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                    Manage
+                </button>
+                <form action="/skills/delete/<%= skill.Id %>" method="POST" onsubmit="return confirm('Delete this skill permanently?')" style="margin:0;">
+                    <button type="submit" class="btn btn-ghost" style="color: var(--danger); padding: 0 12px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    </button>
+                </form>
+            </div>
+        </div>
+    <% }); %>
+</div>
+
+<!-- Add Skill Modal -->
+<div id="addSkillModal" class="modal">
+    <div class="modal-content" style="max-width: 600px;">
+        <div class="modal-header">
+            <h2 class="modal-title">Create Brain Skill</h2>
+            <button class="btn-close" onclick="closeModal('addSkillModal')">&times;</button>
+        </div>
+        <form action="/skills/add" method="POST">
+            <div class="form-group">
+                <label class="input-label">Skill Identity</label>
+                <input type="text" name="name" class="input-field" placeholder="e.g., Refund Policy Specialist" required>
+            </div>
+            <div class="form-group">
+                <label class="input-label">Short Description</label>
+                <input type="text" name="description" class="input-field" placeholder="Briefly describe what this allows the agent to do.">
+            </div>
+            <div class="form-group">
+                <label class="input-label">Procedural Content (AI Instructions)</label>
+                <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 8px;">Write the exact rules or knowledge the agent should use when this skill is active.</p>
+                <textarea name="content" class="input-field" style="min-height: 250px; font-family: monospace; font-size: 0.85rem;" placeholder="1. If the user asks for a refund...&#10;2. Check if the purchase is within 7 days...&#10;3. If YES, ask for the order ID..." required></textarea>
+            </div>
+            <div class="form-group">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="checkbox" name="isAdminOnly">
+                    <span class="input-label" style="margin:0;">Restrict to Privileged Users Only</span>
+                </label>
+            </div>
+            <div class="modal-footer" style="margin-top: 1.5rem;">
+                <button type="button" class="btn btn-ghost" onclick="closeModal('addSkillModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary">Publish Skill</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Skill Modal -->
+<div id="editSkillModal" class="modal">
+    <div class="modal-content" style="max-width: 600px;">
+        <div class="modal-header">
+            <h2 class="modal-title">Edit Brain Skill</h2>
+            <button class="btn-close" onclick="closeModal('editSkillModal')">&times;</button>
+        </div>
+        <form id="editSkillForm" method="POST">
+            <div class="form-group">
+                <label class="input-label">Skill Identity</label>
+                <input type="text" name="name" id="editSkillName" class="input-field" required>
+            </div>
+            <div class="form-group">
+                <label class="input-label">Short Description</label>
+                <input type="text" name="description" id="editSkillDesc" class="input-field">
+            </div>
+            <div class="form-group">
+                <label class="input-label">Procedural Content (AI Instructions)</label>
+                <textarea name="content" id="editSkillContent" class="input-field" style="min-height: 250px; font-family: monospace; font-size: 0.85rem;" required></textarea>
+            </div>
+            <div class="form-group">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="checkbox" name="isAdminOnly" id="editSkillAdminOnly">
+                    <span class="input-label" style="margin:0;">Restrict to Privileged Users Only</span>
+                </label>
+            </div>
+            <div class="modal-footer" style="margin-top: 1.5rem;">
+                <button type="button" class="btn btn-ghost" onclick="closeModal('editSkillModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary">Apply Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function editSkill(id, name, desc, content, isAdminOnly) {
+        document.getElementById('editSkillName').value = name;
+        document.getElementById('editSkillDesc').value = desc;
+        document.getElementById('editSkillContent').value = content;
+        document.getElementById('editSkillAdminOnly').checked = isAdminOnly;
+        document.getElementById('editSkillForm').action = '/skills/' + id;
+        openModal('editSkillModal');
+    }
+
+    function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+</script>
+
+<style>
+    .switch { position: relative; display: inline-block; width: 36px; height: 20px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .4s; border-radius: 20px; }
+    .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+    input:checked + .slider { background-color: var(--primary); }
+    input:checked + .slider:before { transform: translateX(16px); }
+
+    .glass-card:hover { transform: translateY(-3px); box-shadow: 0 12px 20px rgba(0,0,0,0.05), 0 0 0 1px var(--border-accent); }
+</style>
+
+<%- include('partials/foot') %>

@@ -1,0 +1,113 @@
+<%- include('partials/head') %>
+
+<!-- Create New Team -->
+<div class="glass-card">
+    <h2><span class="card-icon">🏗️</span> Create New Team</h2>
+    <form action="/teams/add" method="POST">
+        <div class="horizontal-form" style="grid-template-columns: 1.5fr 2fr auto;">
+            <div>
+                <label class="input-label">Team Name</label>
+                <input type="text" name="name" placeholder="e.g. Sales Alpha" required>
+            </div>
+            <div>
+                <label class="input-label">Short Description</label>
+                <input type="text" name="description" placeholder="What does this team do?">
+            </div>
+            <div style="padding-bottom: 0.75rem;">
+                <button type="submit" class="btn btn-primary" style="height:36px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Create
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Teams Grid -->
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;">
+    <% if(teams.length === 0) { %>
+        <div class="glass-card" style="grid-column: 1 / -1; text-align: center; padding: 4rem;">
+            <p style="color: var(--text-muted); font-style: italic;">No teams created yet. Start by defining your first group above!</p>
+        </div>
+    <% } %>
+
+    <% teams.forEach(team => { %>
+        <div class="glass-card" style="display: flex; flex-direction: column;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                <div>
+                    <h3 style="margin: 0; font-size: 1.1rem; color: var(--text-primary);"><%= team.Name %></h3>
+                    <p style="margin: 4px 0 0 0; font-size: 0.8rem; color: var(--text-muted);"><%= team.Description %></p>
+                </div>
+                <span class="badge badge-Pending" style="background: var(--bg-card); border: 1px solid var(--border); color: var(--text-muted);">
+                    <%= team.members.length %> Members
+                </span>
+            </div>
+
+            <!-- Member List -->
+            <div style="flex-grow: 1; border-top: 1px solid var(--border); padding-top: 1rem;">
+                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                    <% team.members.forEach(member => { %>
+                        <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.5rem; background: rgba(255,255,255,0.3); border-radius: 8px;">
+                            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                <div class="avatar-circle" style="width: 28px; height: 28px; font-size: 0.7rem;">
+                                    <%= member.Name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase() %>
+                                </div>
+                                <div>
+                                    <div style="font-weight: 500; font-size: 0.85rem;"><%= member.Name %></div>
+                                    <% if(member.IsLead) { %>
+                                        <span style="font-size: 0.65rem; color: var(--accent); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">👑 TEAM LEAD</span>
+                                    <% } %>
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 4px;">
+                                <form action="/teams/member" method="POST" style="margin:0;">
+                                    <input type="hidden" name="teamId" value="<%= team.Id %>">
+                                    <input type="hidden" name="personId" value="<%= member.Id %>">
+                                    <input type="hidden" name="isLead" value="<%= member.IsLead ? 'false' : 'true' %>">
+                                    <button type="submit" class="action-btn" title="<%= member.IsLead ? 'Remove Lead' : 'Make Lead' %>" style="padding: 4px;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="<%= member.IsLead ? '#f59e0b' : '#94a3b8' %>" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                                    </button>
+                                </form>
+                                <form action="/teams/member" method="POST" style="margin:0;">
+                                    <input type="hidden" name="teamId" value="<%= team.Id %>">
+                                    <input type="hidden" name="personId" value="<%= member.Id %>">
+                                    <input type="hidden" name="action" value="remove">
+                                    <button type="submit" class="action-btn btn-delete" title="Remove Member" style="padding: 4px;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    <% }) %>
+                    
+                    <% if(team.members.length === 0) { %>
+                        <p style="text-align: center; color: var(--text-muted); font-size: 0.75rem; margin: 1rem 0;">No members in this team.</p>
+                    <% } %>
+                </div>
+            </div>
+
+            <!-- Add Member Form -->
+            <form action="/teams/member" method="POST" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border);">
+                <input type="hidden" name="teamId" value="<%= team.Id %>">
+                <div style="display: flex; gap: 0.5rem; align-items: flex-end;">
+                    <div style="flex-grow: 1;">
+                        <label class="input-label" style="font-size: 0.7rem;">Add Member</label>
+                        <select name="personId" required>
+                            <option value="" disabled selected>Select person...</option>
+                            <% people.filter(p => !team.members.some(m => m.Id === p.Id)).forEach(p => { %>
+                                <option value="<%= p.Id %>"><%= p.Name %></option>
+                            <% }) %>
+                        </select>
+                    </div>
+                    <div>
+                        <button type="submit" class="btn btn-primary" style="height: 38px; width: 38px; padding: 0; justify-content: center;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    <% }) %>
+</div>
+
+<%- include('partials/foot') %>

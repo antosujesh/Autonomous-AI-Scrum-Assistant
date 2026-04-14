@@ -1,0 +1,100 @@
+<%- include('partials/head') %>
+
+<!-- Add User -->
+<div class="glass-card">
+    <h2><span class="card-icon">➕</span> Add User</h2>
+    <form action="/users/add" method="POST">
+        <div class="horizontal-form" style="grid-template-columns: 1fr 1fr 1fr auto;">
+            <div>
+                <label class="input-label">Username</label>
+                <input type="text" name="username" placeholder="john_doe" required>
+            </div>
+            <div>
+                <label class="input-label">Password</label>
+                <input type="password" name="password" placeholder="Min. 6 chars" required minlength="6">
+            </div>
+            <div>
+                <label class="input-label">Role</label>
+                <select name="role">
+                    <option value="admin">Admin (full access)</option>
+                    <option value="viewer">Viewer (read-only)</option>
+                </select>
+            </div>
+            <div style="padding-bottom:0.75rem;">
+                <button type="submit" class="btn btn-primary" style="height:36px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Add User
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Users Table -->
+<div class="glass-card">
+    <h2>
+        <span class="card-icon">👥</span>
+        App Users
+        <span style="margin-left:auto; font-size:0.72rem; font-weight:500; color:var(--text-muted);"><%= users.length %> users</span>
+    </h2>
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                    <th>Last Login</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% users.forEach(user => { %>
+                    <tr>
+                        <td>
+                            <div class="recipient-cell">
+                                <div class="avatar-circle" style="background: var(--grad-brand);"><%= user.Username[0].toUpperCase() %></div>
+                                <strong><%= user.Username %></strong>
+                                <% if(currentUser && currentUser.id === user.Id) { %>
+                                    <span style="font-size:0.62rem; background:#eef2ff; color:var(--primary); border:1px solid #c7d2fe; padding:0.1rem 0.4rem; border-radius:999px; font-weight:600;">You</span>
+                                <% } %>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge-Completed badge" style="<%= user.Role === 'admin' ? '' : 'background:var(--bg-base);color:var(--text-muted);border-color:var(--border);' %>">
+                                <%= user.Role %>
+                            </span>
+                        </td>
+                        <td>
+                            <span class="<%= user.IsActive ? 'user-status-active' : 'user-status-inactive' %>">
+                                <%= user.IsActive ? '● Active' : '○ Inactive' %>
+                            </span>
+                        </td>
+                        <td style="font-size:0.75rem; color:var(--text-muted);"><%= new Date(user.CreatedAt).toLocaleDateString('en-IN', {day:'numeric',month:'short',year:'numeric'}) %></td>
+                        <td style="font-size:0.75rem; color:var(--text-muted);">
+                            <%= user.LastLoginAt ? new Date(user.LastLoginAt).toLocaleString([], {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : 'Never' %>
+                        </td>
+                        <td>
+                            <% if(!currentUser || currentUser.id !== user.Id) { %>
+                                <form action="/users/toggle/<%= user.Id %>" method="POST" style="margin:0;" onsubmit="return confirm('<%= user.IsActive ? 'Deactivate' : 'Activate' %> this user?')">
+                                    <button type="submit" class="action-btn <%= user.IsActive ? 'btn-delete' : 'btn-view' %>" title="<%= user.IsActive ? 'Deactivate' : 'Activate' %>">
+                                        <% if(user.IsActive) { %>
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                        <% } else { %>
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                        <% } %>
+                                    </button>
+                                </form>
+                            <% } else { %>
+                                <span style="font-size:0.68rem; color:var(--text-subtle);">—</span>
+                            <% } %>
+                        </td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<%- include('partials/foot') %>

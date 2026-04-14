@@ -1,0 +1,121 @@
+<%- include('partials/head') %>
+
+<div class="settings-container" style="display: grid; grid-template-columns: 200px 1fr; gap: 2rem; align-items: start;">
+    
+    <!-- Settings Sidebar -->
+    <aside class="glass-card" style="padding: 1rem; position: sticky; top: 5.5rem;">
+        <nav class="settings-nav" style="display: flex; flex-direction: column; gap: 0.5rem;">
+            <a href="/settings/general" class="nav-item">
+                <span style="font-size: 1.1rem;">⚙️</span> General
+            </a>
+            <a href="/settings/security" class="nav-item">
+                <span style="font-size: 1.1rem;">🛡️</span> Security
+            </a>
+            <a href="/settings/ai" class="nav-item active">
+                <span style="font-size: 1.1rem;">🧠</span> AI Engine
+            </a>
+        </nav>
+    </aside>
+
+    <div class="settings-content">
+        <div class="glass-card">
+            <h2><span class="card-icon">🧠</span> AI Engine Configuration</h2>
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 2rem;">
+                Configure the primary intelligence provider and specific LLM models.
+            </p>
+
+            <form action="/settings/update" method="POST">
+                <input type="hidden" name="_section" value="ai">
+                <input type="hidden" name="_redirect" value="/settings/ai">
+
+                <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                    
+                    <!-- Provider Selection -->
+                    <div class="settings-group" style="padding: 1.25rem; background: #f8fafc; border-radius: 12px; border: 1px solid var(--border);">
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <div>
+                                <h3 style="margin: 0; font-size: 1rem; color: var(--text-primary);">Active Intelligence Provider</h3>
+                                <p style="margin: 4px 0 0 0; font-size: 0.8rem; color: var(--text-muted);">
+                                    Choose which AI service powers your agent.
+                                </p>
+                            </div>
+                            <div>
+                                <select name="AI_Provider" class="input-field" style="width: 180px;">
+                                    <option value="OpenAI" <%= settings.AI_Provider === 'OpenAI' ? 'selected' : '' %>>OpenAI (GPT)</option>
+                                    <option value="Gemini" <%= settings.AI_Provider === 'Gemini' ? 'selected' : '' %>>Google Gemini</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- OpenAI Configuration -->
+                    <div class="settings-group" style="padding: 1.25rem; background: #f8fafc; border-radius: 12px; border: 1px solid var(--border);">
+                        <div class="group-header">
+                            <h3 style="margin: 0; font-size: 1rem; color: var(--text-primary);">OpenAI Settings</h3>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1.25rem;">
+                            <div>
+                                <label class="input-label">OpenAI API Key</label>
+                                <input type="password" name="OpenAI_ApiKey" value="<%= settings.OpenAI_ApiKey || '' %>" class="input-field" placeholder="sk-...">
+                            </div>
+                            <div>
+                                <label class="input-label">Model Name</label>
+                                <input type="text" name="OpenAI_Model" value="<%= settings.OpenAI_Model || 'gpt-4o' %>" class="input-field" placeholder="e.g. gpt-4o or gpt-3.5-turbo">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Gemini Configuration -->
+                    <div class="settings-group" style="padding: 1.25rem; background: #f8fafc; border-radius: 12px; border: 1px solid var(--border);">
+                        <div class="group-header">
+                            <h3 style="margin: 0; font-size: 1rem; color: var(--text-primary);">Google Gemini Settings</h3>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1.25rem;">
+                            <div>
+                                <label class="input-label">Gemini API Key</label>
+                                <input type="password" name="Gemini_ApiKey" value="<%= settings.Gemini_ApiKey || '' %>" class="input-field" placeholder="AIza...">
+                            </div>
+                            <div>
+                                <label class="input-label">Model Name</label>
+                                <input type="text" name="Gemini_Model" value="<%= settings.Gemini_Model || 'gemini-1.5-flash' %>" class="input-field" placeholder="e.g. gemini-1.5-flash or gemini-1.5-pro">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 1rem; padding-top: 2rem; border-top: 1px solid var(--border); display: flex; justify-content: flex-end;">
+                        <button type="submit" class="btn btn-primary" style="padding: 0.875rem 2.5rem;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                            Save AI Engine Settings
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+.settings-nav .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    text-decoration: none;
+    color: var(--text-muted);
+    font-weight: 500;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+}
+.settings-nav .nav-item:hover { background: var(--bg-base); color: var(--text); }
+.settings-nav .nav-item.active { background: var(--grad-brand); color: white; }
+
+.settings-group {
+    transition: transform 0.2s;
+}
+.settings-group:hover {
+    transform: translateY(-2px);
+}
+</style>
+
+<%- include('partials/foot') %>

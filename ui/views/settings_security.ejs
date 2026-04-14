@@ -1,0 +1,158 @@
+<%- include('partials/head') %>
+
+<div class="settings-container" style="display: grid; grid-template-columns: 200px 1fr; gap: 2rem; align-items: start;">
+    
+    <!-- Settings Sidebar -->
+    <aside class="glass-card" style="padding: 1rem; position: sticky; top: 5.5rem;">
+        <nav class="settings-nav" style="display: flex; flex-direction: column; gap: 0.5rem;">
+            <a href="/settings/general" class="nav-item">
+                <span style="font-size: 1.1rem;">⚙️</span> General
+            </a>
+            <a href="/settings/security" class="nav-item active">
+                <span style="font-size: 1.1rem;">🛡️</span> Security
+            </a>
+            <a href="/settings/ai" class="nav-item">
+                <span style="font-size: 1.1rem;">🧠</span> AI Engine
+            </a>
+        </nav>
+    </aside>
+
+    <div class="settings-content">
+        <div class="glass-card">
+            <h2><span class="card-icon">🔐</span> Security & Permissions</h2>
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 2rem;">
+                Control AI agent boundaries and code execution safety.
+            </p>
+
+            <form action="/settings/update" method="POST">
+                <input type="hidden" name="_section" value="security">
+                <input type="hidden" name="_redirect" value="/settings/security">
+
+                <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                    
+                    <!-- Admin Guard -->
+                    <div class="permission-group">
+                        <div class="group-header">
+                            <h3 style="margin: 0; font-size: 1rem; color: var(--text-primary);">Admin Identity</h3>
+                            <p style="margin: 4px 0 0 0; font-size: 0.8rem; color: var(--text-muted);">
+                                Define the primary controller of the AI agent.
+                            </p>
+                        </div>
+                        <div style="padding-top: 1rem;">
+                            <label class="input-label" style="display: block; margin-bottom: 8px;">Admin Phone Number (WhatsApp Format)</label>
+                            <input type="text" name="AdminPhone" value="<%= settings.AdminPhone || '' %>" class="input-field" placeholder="e.g. 919876543210" style="max-width: 300px;">
+                            <p style="margin-top: 4px; font-size: 0.72rem; color: var(--text-muted);">Only this number is authorized for sensitive "Create Skill" commands.</p>
+                        </div>
+                    </div>
+
+                    <!-- Code Execution Permissions -->
+                    <div class="permission-group">
+                        <div class="group-header">
+                            <h3 style="margin: 0; font-size: 1rem; color: var(--text-primary);">Code Execution (executeCode)</h3>
+                            <p style="margin: 4px 0 0 0; font-size: 0.8rem; color: var(--text-muted);">
+                                Restrict what the AI can do when running specialized scripts.
+                            </p>
+                        </div>
+                        
+                        <div class="permission-checks" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; padding-top: 1rem;">
+                            <div class="check-item">
+                                <label class="switch">
+                                    <input type="checkbox" name="CodeExecution_AllowExecute" <%= settings.CodeExecution_AllowExecute === 'true' ? 'checked' : '' %>>
+                                    <span class="slider round"></span>
+                                </label>
+                                <div class="check-label">
+                                    <strong>Run Code</strong>
+                                    <span>Allow AI to run general calculations and logic scripts.</span>
+                                </div>
+                            </div>
+                            <div class="check-item">
+                                <label class="switch">
+                                    <input type="checkbox" name="CodeExecution_AllowWrite" <%= settings.CodeExecution_AllowWrite === 'true' ? 'checked' : '' %>>
+                                    <span class="slider round"></span>
+                                </label>
+                                <div class="check-label">
+                                    <strong>Write Access</strong>
+                                    <span>Allow code to create or modify data in the system.</span>
+                                </div>
+                            </div>
+                            <div class="check-item">
+                                <label class="switch">
+                                    <input type="checkbox" name="CodeExecution_AllowEdit" <%= settings.CodeExecution_AllowEdit === 'true' ? 'checked' : '' %>>
+                                    <span class="slider round"></span>
+                                </label>
+                                <div class="check-label">
+                                    <strong>Edit Access</strong>
+                                    <span>Allow code to update existing records or settings.</span>
+                                </div>
+                            </div>
+                            <div class="check-item">
+                                <label class="switch">
+                                    <input type="checkbox" name="CodeExecution_AllowDelete" <%= settings.CodeExecution_AllowDelete === 'true' ? 'checked' : '' %>>
+                                    <span class="slider round"></span>
+                                </label>
+                                <div class="check-label">
+                                    <strong>Delete Access</strong>
+                                    <span>Allow code to perform destructive deletion operations.</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 1rem; padding-top: 2rem; border-top: 1px solid var(--border); display: flex; justify-content: flex-end;">
+                        <button type="submit" class="btn btn-primary" style="padding: 0.875rem 2.5rem;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                            Apply Security Rules
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+.settings-nav .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    text-decoration: none;
+    color: var(--text-muted);
+    font-weight: 500;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+}
+.settings-nav .nav-item:hover { background: var(--bg-base); color: var(--text); }
+.settings-nav .nav-item.active { background: var(--grad-brand); color: white; }
+
+.permission-group {
+    padding: 1.25rem;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+}
+
+.check-item {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+    padding: 0.75rem;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+}
+
+.check-label strong { display: block; font-size: 0.85rem; color: var(--text); }
+.check-label span { font-size: 0.7rem; color: var(--text-muted); }
+
+/* Switch CSS */
+.switch { position: relative; display: inline-block; width: 44px; height: 22px; flex-shrink: 0; margin-top: 2px; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .4s; border-radius: 34px; }
+.slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+input:checked + .slider { background-color: var(--primary); }
+input:checked + .slider:before { transform: translateX(22px); }
+</style>
+
+<%- include('partials/foot') %>

@@ -1,0 +1,178 @@
+<%- include('partials/head') %>
+
+<!-- Board Header -->
+<div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: flex-end;">
+    <div>
+        <h2 style="margin:0; font-family: 'Outfit', sans-serif;">Production Board</h2>
+        <p style="margin:0; font-size: 0.85rem; color: var(--text-muted);">Visualizing task flow across team members and projects.</p>
+    </div>
+    <div style="display: flex; gap: 0.75rem;">
+        <select class="input-field" style="width: 180px; margin: 0; padding: 6px 12px; font-size: 0.8rem;" onchange="filterBoard('project', this.value)">
+            <option value="all">All Projects</option>
+            <% projects.forEach(p => { %>
+                <option value="<%= p.Id %>"><%= p.Name %></option>
+            <% }) %>
+        </select>
+        <select class="input-field" style="width: 180px; margin: 0; padding: 6px 12px; font-size: 0.8rem;" onchange="filterBoard('person', this.value)">
+            <option value="all">All Members</option>
+            <% people.forEach(p => { %>
+                <option value="<%= p.Id %>"><%= p.Name %></option>
+            <% }) %>
+        </select>
+    </div>
+</div>
+
+<!-- Kanban Grid -->
+<div class="kanban-container">
+    <% const statuses = ['Pending', 'In Progress', 'Completed']; %>
+    <% statuses.forEach(status => { %>
+        <div class="kanban-column" id="col-<%= status.replace(' ', '') %>">
+            <div class="column-header">
+                <h3><%= status %></h3>
+                <span class="count-badge"><%= tasks.filter(t => t.Status === status).length %></span>
+            </div>
+            
+            <div class="column-cards" ondrop="drop(event, '<%= status %>')" ondragover="allowDrop(event)">
+                <% tasks.filter(t => t.Status === status).forEach(task => { %>
+                    <% const project = projects.find(p => p.Id === (task.ProjectId || 1)); %>
+                    <div class="kanban-card" 
+                         draggable="true" 
+                         ondragstart="drag(event, '<%= task.Id %>')"
+                         data-id="<%= task.Id %>"
+                         data-project="<%= task.ProjectId || 1 %>"
+                         data-person="<%= task.PersonId %>">
+                        
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span class="project-tag" style="background: <%= project ? project.Color + '20' : '#4f46e520' %>; color: <%= project ? project.Color : '#4f46e5' %>;">
+                                <%= project ? project.Name : 'General' %>
+                            </span>
+                            <% if(task.Priority >= 3) { %>
+                                <span class="priority-dot <%= task.Priority == 4 ? 'urgent' : 'high' %>"></span>
+                            <% } %>
+                        </div>
+
+                        <div class="card-title"><%= task.Description %></div>
+                        
+                        <div class="card-footer">
+                            <div class="assignee-avatar" title="<%= task.PersonName %>">
+                                <%= task.PersonName ? task.PersonName.charAt(0) : '?' %>
+                            </div>
+                            <div class="due-date <%= new Date(task.ReDueDate || task.DueDate) < new Date() ? 'overdue' : '' %>">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                <%= new Date(task.ReDueDate || task.DueDate).toLocaleDateString('en-IN', {day:'numeric', month:'short'}) %>
+                            </div>
+                        </div>
+                    </div>
+                <% }) %>
+            </div>
+        </div>
+    <% }) %>
+</div>
+
+<style>
+    .kanban-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; height: calc(100vh - 250px); overflow: hidden; }
+    .kanban-column { background: rgba(0,0,0,0.02); border: 1px solid var(--border); border-radius: 12px; display: flex; flex-direction: column; max-height: 100%; }
+    .column-header { padding: 1rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .column-header h3 { margin: 0; font-size: 0.95rem; font-family: 'Outfit', sans-serif; color: var(--text); }
+    .count-badge { background: var(--border); color: var(--text-muted); padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: 700; }
+    
+    .column-cards { padding: 0.75rem; flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 0.75rem; transition: background 0.2s; }
+    .column-cards.drag-over { background: rgba(79,70,229,0.05); border-radius: 0 0 12px 12px; }
+    
+    .kanban-card { background: white; border: 1px solid var(--border); border-radius: 10px; padding: 1rem; box-shadow: 0 2px 4px rgba(0,0,0,0.02); cursor: grab; transition: transform 0.2s, box-shadow 0.2s; }
+    .kanban-card.dragging { opacity: 0.5; transform: scale(0.95); }
+    .kanban-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    .kanban-card:active { cursor: grabbing; }
+
+    .project-tag { font-size: 0.65rem; font-weight: 800; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .priority-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .priority-dot.high { background: #f59e0b; }
+    .priority-dot.urgent { background: #dc2626; box-shadow: 0 0 8px rgba(220, 38, 38, 0.4); }
+
+    .card-title { font-size: 0.85rem; color: var(--text); line-height: 1.4; margin-bottom: 1rem; font-weight: 500; }
+    
+    .card-footer { display: flex; justify-content: space-between; align-items: center; }
+    .assignee-avatar { width: 24px; height: 24px; background: var(--grad-brand-sm); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 700; border: 2px solid white; box-shadow: 0 0 0 1px var(--border); }
+    .due-date { font-size: 0.72rem; color: var(--text-muted); display: flex; align-items: center; gap: 4px; font-weight: 600; }
+    .due-date.overdue { color: #dc2626; }
+</style>
+
+<script>
+    function allowDrop(ev) { 
+        ev.preventDefault(); 
+        ev.currentTarget.classList.add('drag-over');
+    }
+
+    function drag(ev, id) { 
+        ev.dataTransfer.setData("taskId", id); 
+        ev.target.classList.add('dragging'); 
+    }
+
+    // Handle drag leave to remove highlight
+    document.addEventListener('dragleave', (e) => {
+        if (e.target.classList.contains('column-cards')) {
+            e.target.classList.remove('drag-over');
+        }
+    });
+    
+    async function drop(ev, newStatus) {
+        ev.preventDefault();
+        const container = ev.currentTarget;
+        container.classList.remove('drag-over');
+        
+        const id = ev.dataTransfer.getData("taskId");
+        const card = document.querySelector(`.kanban-card[draggable="true"][data-id="${id}"]`) || 
+                     document.querySelector(`.kanban-card.dragging`);
+        
+        if (!card) return;
+        card.classList.remove('dragging');
+
+        try {
+            const response = await fetch('/api/update-task-status', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ taskId: id, status: newStatus })
+            });
+            const result = await response.json();
+            if (result.success) {
+                // SUCCESS: Move the card in the DOM instead of reloading
+                container.appendChild(card);
+                updateCounters();
+            } else {
+                alert('Error updating status: ' + result.error);
+                window.location.reload(); // Fallback on error
+            }
+        } catch (err) {
+            console.error('Drop error:', err);
+            window.location.reload();
+        }
+    }
+
+    function updateCounters() {
+        ['Pending', 'InProgress', 'Completed'].forEach(statusId => {
+            const col = document.getElementById(`col-${statusId}`);
+            if (col) {
+                const countBadge = col.querySelector('.count-badge');
+                const cardCount = col.querySelector('.column-cards').children.length;
+                countBadge.textContent = cardCount;
+            }
+        });
+    }
+
+    function filterBoard(type, val) {
+        const cards = document.querySelectorAll('.kanban-card');
+        cards.forEach(card => {
+            const matchesProject = type === 'project' ? (val === 'all' || card.dataset.project == val) : true;
+            const matchesPerson = type === 'person' ? (val === 'all' || card.dataset.person == val) : true;
+            
+            // This is a simplified filter - real multi-filter would track both states
+            if (matchesProject && matchesPerson) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    }
+</script>
+
+<%- include('partials/foot') %>

@@ -1,0 +1,75 @@
+<%- include('partials/head') %>
+
+<!-- ── Connection Hero ───────────────────────────────── -->
+<div class="glass-card">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem;">
+        <div>
+            <h2 style="margin-bottom: 0.25rem;">
+                <span class="card-icon">🔌</span>
+                WhatsApp Connectivity
+            </h2>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-left: 2.25rem;">Bridge your workspace to the WhatsApp network.</p>
+        </div>
+        <button onclick="resetConnection()" class="btn btn-danger">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            Disconnect / Reset
+        </button>
+    </div>
+
+    <!-- Status Hero -->
+    <div class="conn-hero">
+        <div class="conn-status-ring <%= connection.status === 'CONNECTED' ? 'connected' : '' %>">
+            <div class="big-dot status-dot status-<%= connection.status.replace('_', '').replace(/ /g, '') %>" style="width:28px;height:28px;border-radius:50%;"></div>
+        </div>
+        <div>
+            <span class="conn-status-label">Engine Status</span>
+            <span class="conn-status-value status-text"><%= connection.status %></span>
+        </div>
+    </div>
+
+    <!-- QR Section -->
+    <div id="qr-container" style="display: <%= connection.status === 'SCANNING_REQUIRED' ? 'flex' : 'none' %>; flex-direction: column; align-items: center; padding-top: 2rem; border-top: 1px solid var(--border); margin-top: 1rem; gap: 1rem;">
+        <p style="font-weight: 600; color: var(--text);">Scan this QR code with your phone to connect</p>
+        <div class="qr-frame">
+            <img id="qr-image" src="<%= connection.qrDataUrl || '' %>" alt="WhatsApp QR Code">
+        </div>
+        <p style="font-size: 0.8rem; color: var(--text-muted);">
+            WhatsApp → Settings → Linked Devices → Link a Device
+        </p>
+    </div>
+
+    <!-- Connected Banner -->
+    <% if(connection.status === 'CONNECTED') { %>
+        <div class="success-banner">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <div>
+                <div style="font-weight: 700; font-size: 0.95rem;">System Active & Secure</div>
+                <div style="font-size: 0.8rem; opacity: 0.8; margin-top: 2px;">The bot is actively handling incoming WhatsApp messages.</div>
+            </div>
+        </div>
+    <% } %>
+</div>
+
+<!-- ── Control Panel ─────────────────────────────────── -->
+<div class="glass-card">
+    <h2>
+        <span class="card-icon">⚙️</span>
+        How It Works
+    </h2>
+    <div style="display: flex; flex-direction: column; gap: 0.875rem;">
+        <div class="help-item">
+            <strong>Persistent Session:</strong> Your session remains active even after a page refresh. You only need to scan the QR code once.
+        </div>
+        <div class="help-item">
+            <strong>Re-linking:</strong> If the bot becomes unresponsive, click <em>"Disconnect / Reset"</em> above to generate a new QR code and re-scan.
+        </div>
+        <div class="help-item">
+            <strong>Task Reminders:</strong> The agent automatically sends WhatsApp reminders for overdue tasks. You can also trigger them manually using the 🔔 button in the header.
+        </div>
+        <div class="help-item">
+            <strong>Daily Scrum:</strong> Clicking <em>"Daily Scrum"</em> in the header initiates a check-in conversation with every registered contact via WhatsApp.
+        </div>
+    </div>
+</div>
+
+<%- include('partials/foot') %>

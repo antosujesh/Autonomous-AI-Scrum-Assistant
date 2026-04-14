@@ -1,0 +1,465 @@
+<%- include('partials/head') %>
+
+<!-- Header / Actions -->
+<div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: flex-end;">
+    <div>
+        <h2 style="margin:0; font-family: 'Outfit', sans-serif;">Task Management Suite</h2>
+        <p style="margin:0; font-size: 0.85rem; color: var(--text-muted);">Manage assignments, track priorities, and monitor team productivity.</p>
+    </div>
+    <button class="btn btn-primary" onclick="openModal('addTaskModal')">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        New Assignment
+    </button>
+</div>
+
+<!-- Filtering Row -->
+<div class="glass-card" style="margin-bottom: 1.5rem; padding: 1rem; display: flex; gap: 1rem; flex-wrap: wrap; background: rgba(255,255,255,0.4);">
+    <div style="flex: 1; min-width: 150px;">
+        <label class="input-label" style="font-size: 0.75rem; margin-bottom: 4px;">Search Tasks</label>
+        <input type="text" id="filter-search" class="input-field" placeholder="Search description..." onkeyup="currentPage=1; renderPagination()" style="padding: 8px 12px; font-size: 0.85rem; margin:0;">
+    </div>
+    <div style="width: 180px;">
+        <label class="input-label" style="font-size: 0.75rem; margin-bottom: 4px;">Project</label>
+        <select id="filter-project" class="input-field" onchange="currentPage=1; renderPagination()" style="padding: 8px; font-size: 0.85rem; margin:0;">
+            <option value="all">All Projects</option>
+            <% projects.forEach(p => { %>
+                <option value="<%= p.Id %>"><%= p.Name %></option>
+            <% }) %>
+        </select>
+    </div>
+    <div style="width: 150px;">
+        <label class="input-label" style="font-size: 0.75rem; margin-bottom: 4px;">Status</label>
+        <select id="filter-status" class="input-field" onchange="currentPage=1; renderPagination()" style="padding: 8px; font-size: 0.85rem; margin:0;">
+            <option value="all">All Statuses</option>
+            <option value="Pending">Pending</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Completed">Completed</option>
+        </select>
+    </div>
+    <div style="width: 180px;">
+        <label class="input-label" style="font-size: 0.75rem; margin-bottom: 4px;">Assignee</label>
+        <select id="filter-person" class="input-field" onchange="currentPage=1; renderPagination()" style="padding: 8px; font-size: 0.85rem; margin:0;">
+            <option value="all">All Members</option>
+            <% people.forEach(p => { %>
+                <option value="<%= p.Id %>"><%= p.Name %></option>
+            <% }) %>
+        </select>
+    </div>
+</div>
+
+<!-- ── Task Management Table ─────────────────────────── -->
+<div class="glass-card">
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 20%;">Recipient</th>
+                    <th style="width: 30%;">Task Detail</th>
+                    <th style="width: 15%;">Project & Priority</th>
+                    <th style="width: 15%;">Timeline</th>
+                    <th style="width: 10%;">Status</th>
+                    <th style="width: 10%;">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="task-table-body">
+                <% if(tasks.length === 0) { %>
+                    <tr><td colspan="5" class="empty-state">No tasks yet — assign one above!</td></tr>
+                <% } %>
+                <% tasks.forEach(task => { %>
+                    <tr class="task-row" 
+                        data-project="<%= task.ProjectId || 1 %>" 
+                        data-status="<%= task.Status %>" 
+                        data-person="<%= task.PersonId %>"
+                        data-desc="<%= task.Description.toLowerCase() %>">
+                        <td>
+                            <div class="recipient-cell">
+                                <div class="avatar-circle"><%= task.PersonName ? task.PersonName.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase() : '?' %></div>
+                                <div>
+                                    <span class="recipient-name"><%= task.PersonName %></span>
+                                    <span class="recipient-phone"><%= task.PhoneNumber %></span>
+                                </div>
+                            </div>
+                            <% if(task.FollowUpPersonName) { %>
+                            <div style="margin-top: 0.4rem; padding-top: 0.4rem; border-top: 1px dashed var(--border); display: flex; align-items: center; gap: 0.35rem; font-size: 0.75rem; color: var(--text-muted);">
+                                <span title="Followed By">👁️</span> 
+                                <span><%= task.FollowUpPersonName %></span>
+                            </div>
+                            <% } %>
+                        </td>
+                        <td style="max-width: 250px;">
+                            <span style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.5; font-weight: 500;">
+                                <%= task.Description %>
+                            </span>
+                            <% if(task.EstimateHours) { %>
+                                <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 4px;">
+                                    ⏱️ Est: <%= task.EstimateHours %>h
+                                </div>
+                            <% } %>
+                        </td>
+                        <td>
+                            <% const project = projects.find(p => p.Id === (task.ProjectId || 1)); %>
+                            <span class="badge" style="background: <%= project ? project.Color + '15' : 'rgba(0,0,0,0.05)' %>; color: <%= project ? project.Color : 'inherit' %>; border: 1px solid <%= project ? project.Color + '30' : 'transparent' %>; font-size: 0.65rem; padding: 2px 6px;">
+                                <%= project ? project.Name : 'General' %>
+                            </span>
+                            <div style="margin-top: 5px;">
+                                <% const pLabels = ['Low', 'Medium', 'High', 'Urgent']; %>
+                                <span class="priority-label prio-<%= task.Priority || 2 %>">
+                                    <%= pLabels[(task.Priority || 2) - 1] %>
+                                </span>
+                            </div>
+                        </td>
+                        <td>
+                            <% if(task.ReDueDate) { %>
+                                <div style="color: var(--accent); font-weight: 600; font-size: 0.82rem;">
+                                    📅 <%= new Date(task.ReDueDate).toLocaleDateString('en-IN', {day:'numeric',month:'short',year:'numeric'}) %>
+                                </div>
+                                <div style="font-size: 0.7rem; color: var(--text-muted); text-decoration: line-through; margin-top: 2px;">
+                                    Orig: <%= new Date(task.DueDate).toLocaleDateString('en-IN', {day:'numeric',month:'short'}) %>
+                                </div>
+                            <% } else { %>
+                                <span style="font-size: 0.82rem;">
+                                    <%= new Date(task.DueDate).toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'}) %>
+                                </span>
+                            <% } %>
+                        </td>
+                        <td><span class="badge badge-<%= task.Status.replace(' ', '') %>"><%= task.Status %></span></td>
+                        <td>
+                            <div style="display: flex; gap: 0.4rem; align-items: center;">
+                                <button onclick='viewActivity(<%= task.Id %>)' class="action-btn btn-view" title="View Activity Log">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                </button>
+                                <button onclick='openEditTaskModal(<%= JSON.stringify(task) %>)' class="action-btn btn-edit" title="Edit Task">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                </button>
+                                <form action="/delete-task/<%= task.Id %>" method="POST" onsubmit="return confirm('Delete this task?')" style="margin:0;">
+                                    <button type="submit" class="action-btn btn-delete" title="Delete">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ── Add Task Modal ────────────────────────────────── -->
+<div id="addTaskModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                New Task Assignment
+            </h2>
+            <button onclick="closeModal('addTaskModal')" class="close-btn">&times;</button>
+        </div>
+        <form action="/add-task" method="POST">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div>
+                    <label class="input-label">Assign To</label>
+                    <select name="personId" required>
+                        <option value="" disabled selected>Select person…</option>
+                        <% people.forEach(person => { %>
+                            <option value="<%= person.Id %>"><%= person.Name %></option>
+                        <% }) %>
+                    </select>
+                </div>
+                <div>
+                    <label class="input-label">Followed By</label>
+                    <select name="followUpPersonId">
+                        <option value="">None (Optional)</option>
+                        <% people.filter(p => ['Head', 'Boss'].includes(p.Role)).forEach(person => { %>
+                            <option value="<%= person.Id %>"><%= person.Name %></option>
+                        <% }) %>
+                    </select>
+                </div>
+            </div>
+            
+            <label class="input-label">Task Description</label>
+            <textarea name="description" placeholder="Describe the task in detail..." required rows="3" style="width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem; font-family: inherit; font-size: 0.9rem; margin-bottom: 1rem;"></textarea>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div>
+                    <label class="input-label">Project</label>
+                    <select name="projectId" required>
+                        <% projects.forEach(p => { %>
+                            <option value="<%= p.Id %>" <%= p.Id == 1 ? 'selected' : '' %>><%= p.Name %></option>
+                        <% }) %>
+                    </select>
+                </div>
+                <div>
+                    <label class="input-label">Priority</label>
+                    <select name="priority" required>
+                        <option value="1">Low</option>
+                        <option value="2" selected>Medium</option>
+                        <option value="3">High</option>
+                        <option value="4">Urgent</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div>
+                    <label class="input-label">Due Date & Time</label>
+                    <input type="datetime-local" name="dueDate" required>
+                </div>
+                <div>
+                    <label class="input-label">Estimate (Hours)</label>
+                    <input type="number" name="estimateHours" step="0.5" placeholder="e.g. 4.5">
+                </div>
+            </div>
+
+            <div style="margin-top: 1.5rem;">
+                <button type="submit" class="btn btn-primary" style="width: 100%; height: 48px;">
+                    Send Assignment via WhatsApp
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ── Edit Task Modal ───────────────────────────────── -->
+<div id="editTaskModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                Edit Task
+            </h2>
+            <button onclick="closeModal('editTaskModal')" class="close-btn">&times;</button>
+        </div>
+        <form action="/update-task" method="POST">
+            <input type="hidden" name="id" id="edit-task-id">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div>
+                    <label class="input-label">Assigned To</label>
+                    <select name="personId" id="edit-task-person" required>
+                        <% people.forEach(person => { %>
+                            <option value="<%= person.Id %>"><%= person.Name %></option>
+                        <% }) %>
+                    </select>
+                </div>
+                <div>
+                    <label class="input-label">Followed By</label>
+                    <select name="followUpPersonId" id="edit-task-followup">
+                        <option value="">None (Optional)</option>
+                        <% people.filter(p => ['Head', 'Boss'].includes(p.Role)).forEach(person => { %>
+                            <option value="<%= person.Id %>"><%= person.Name %></option>
+                        <% }) %>
+                    </select>
+                </div>
+            </div>
+            <label class="input-label">Description</label>
+            <textarea name="description" id="edit-task-desc" required rows="3"></textarea>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div>
+                    <label class="input-label">Due Date</label>
+                    <input type="datetime-local" name="dueDate" id="edit-task-due" required>
+                </div>
+                <div>
+                    <label class="input-label">Rescheduled To</label>
+                    <input type="datetime-local" name="reDueDate" id="edit-task-redue">
+                </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div>
+                    <label class="input-label">Project</label>
+                    <select name="projectId" id="edit-task-project" required>
+                        <% projects.forEach(p => { %>
+                            <option value="<%= p.Id %>"><%= p.Name %></option>
+                        <% }) %>
+                    </select>
+                </div>
+                <div>
+                    <label class="input-label">Priority</label>
+                    <select name="priority" id="edit-task-priority" required>
+                        <option value="1">Low</option>
+                        <option value="2">Medium</option>
+                        <option value="3">High</option>
+                        <option value="4">Urgent</option>
+                    </select>
+                </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div>
+                    <label class="input-label">Status</label>
+                    <select name="status" id="edit-task-status" required>
+                        <option value="Pending">⏳ Pending</option>
+                        <option value="In Progress">🔵 In Progress</option>
+                        <option value="Completed">✅ Completed</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="input-label">Estimate (Hours)</label>
+                    <input type="number" name="estimateHours" id="edit-task-estimate" step="0.5">
+                </div>
+            </div>
+            <div style="margin-top: 0.5rem;">
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ── Activity Log Modal ────────────────────────────── -->
+<div id="activityModal" class="modal">
+    <div class="modal-content" style="max-width: 600px;">
+        <div class="modal-header">
+            <h2>
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                Activity Log
+            </h2>
+            <button onclick="closeModal('activityModal')" class="close-btn">&times;</button>
+        </div>
+        <div id="activity-blocks" style="display: flex; flex-direction: column; gap: 0.75rem; max-height: 420px; overflow-y: auto; padding-right: 4px;">
+            <!-- injected by JS -->
+        </div>
+    </div>
+</div>
+
+<script>
+    function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+    function openEditTaskModal(task) {
+        document.getElementById('edit-task-id').value = task.Id;
+        document.getElementById('edit-task-person').value = task.PersonId;
+        document.getElementById('edit-task-followup').value = task.FollowUpPersonId || '';
+        document.getElementById('edit-task-desc').value = task.Description;
+        document.getElementById('edit-task-due').value = new Date(task.DueDate).toISOString().slice(0, 16);
+        document.getElementById('edit-task-redue').value = task.ReDueDate ? new Date(task.ReDueDate).toISOString().slice(0, 16) : '';
+        document.getElementById('edit-task-status').value = task.Status;
+        document.getElementById('edit-task-project').value = task.ProjectId || 1;
+        document.getElementById('edit-task-priority').value = task.Priority || 2;
+        document.getElementById('edit-task-estimate').value = task.EstimateHours || '';
+        document.getElementById('editTaskModal').style.display = 'flex';
+    }
+
+    async function viewActivity(taskId) {
+        document.getElementById('activityModal').style.display = 'flex';
+        const container = document.getElementById('activity-blocks');
+        container.innerHTML = '<p style="text-align:center; color:var(--text-muted); padding: 2rem 0;">Loading activity…</p>';
+        try {
+            const res = await fetch(`/api/tasks/${taskId}/activity`);
+            const logs = await res.json();
+
+            if (logs.length === 0) {
+                container.innerHTML = '<p style="text-align:center; color:var(--text-muted); font-style:italic; padding: 2rem 0;">No activity logged yet.</p>';
+                return;
+            }
+
+            container.innerHTML = logs.map(log => {
+                const isUser = log.MessageType === 'User';
+                const date = new Date(log.CreatedAt).toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
+                return `
+                    <div class="activity-bubble ${isUser ? 'user-bubble' : 'agent-bubble'}">
+                        <div class="bubble-meta">
+                            <span>${isUser ? '👤 User Reply' : '🤖 Agent Action'}</span>
+                            <span>${date}</span>
+                        </div>
+                        <div class="activity-bubble-text">${log.MessageText}</div>
+                    </div>
+                `;
+            }).join('');
+
+            // Auto-scroll to bottom of activity logs
+            setTimeout(() => {
+                container.scrollTop = container.scrollHeight;
+            }, 50);
+        } catch(e) {
+            container.innerHTML = '<p style="color:var(--danger); text-align:center; padding: 1rem;">Failed to load activity.</p>';
+        }
+    }
+
+    // --- Pagination Logic ---
+    let currentPage = 1;
+    const tasksPerPage = 10;
+    const tableBody = document.getElementById('task-table-body');
+    const allRowsArr = Array.from(tableBody.querySelectorAll('.task-row'));
+
+    function renderPagination() {
+        const searchTerm = document.getElementById('filter-search').value.toLowerCase();
+        const projectFilter = document.getElementById('filter-project').value;
+        const statusFilter = document.getElementById('filter-status').value;
+        const personFilter = document.getElementById('filter-person').value;
+
+        // Apply Filtering first
+        const filteredRows = allRowsArr.filter(row => {
+            const matchesSearch = row.dataset.desc.includes(searchTerm);
+            const matchesProject = projectFilter === 'all' || row.dataset.project === projectFilter;
+            const matchesStatus = statusFilter === 'all' || row.dataset.status === statusFilter;
+            const matchesPerson = personFilter === 'all' || row.dataset.person === personFilter;
+            
+            const isVisible = matchesSearch && matchesProject && matchesStatus && matchesPerson;
+            row.style.display = 'none'; // Default to hidden
+            return isVisible;
+        });
+
+        const totalTasks = filteredRows.length;
+        const totalPages = Math.ceil(totalTasks / tasksPerPage) || 1;
+        
+        if (currentPage > totalPages) currentPage = totalPages;
+
+        // Show only rows for current page
+        filteredRows.forEach((row, index) => {
+            const start = (currentPage - 1) * tasksPerPage;
+            const end = start + tasksPerPage;
+            if (index >= start && index < end) {
+                row.style.display = '';
+            }
+        });
+
+        document.getElementById('pagination-info').textContent = 
+            totalTasks > 0 
+                ? `Showing ${Math.min(tasksPerPage * (currentPage - 1) + 1, totalTasks)} to ${Math.min(tasksPerPage * currentPage, totalTasks)} of ${totalTasks} tasks`
+                : `Showing 0 to 0 of 0 tasks`;
+        
+        document.getElementById('prev-btn').disabled = currentPage === 1;
+        document.getElementById('next-btn').disabled = currentPage === totalPages || totalPages === 0;
+
+        // Render page numbers
+        const pageNumbers = document.getElementById('page-numbers');
+        pageNumbers.innerHTML = '';
+        
+        // Limit number of page buttons if many
+        for (let i = 1; i <= totalPages; i++) {
+            if (totalPages > 8 && i > 3 && i < totalPages - 2 && Math.abs(i - currentPage) > 1) {
+                if (i === 4 || i === totalPages - 3) {
+                    const span = document.createElement('span');
+                    span.textContent = '...';
+                    span.style = 'align-self: flex-end; padding: 0 4px;';
+                    pageNumbers.appendChild(span);
+                }
+                continue;
+            }
+            const btn = document.createElement('button');
+            btn.className = `btn ${i === currentPage ? 'btn-primary' : 'btn-ghost'}`;
+            btn.style = 'padding: 4px 10px; font-size: 0.75rem;';
+            btn.textContent = i;
+            btn.onclick = () => { currentPage = i; renderPagination(); };
+            pageNumbers.appendChild(btn);
+        }
+    }
+
+    function changePage(dir) {
+        currentPage += dir;
+        renderPagination();
+    }
+
+    // Initialize
+    if (allRowsArr.length > 0) renderPagination();
+</script>
+
+<style>
+    .priority-label { font-size: 0.62rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
+    .prio-1 { color: #64748b; }
+    .prio-2 { color: #0ea5e9; }
+    .prio-3 { color: #f59e0b; }
+    .prio-4 { color: #dc2626; }
+    
+    .btn-ghost:disabled { opacity: 0.3; cursor: not-allowed; }
+</style>
+
+<%- include('partials/foot') %>

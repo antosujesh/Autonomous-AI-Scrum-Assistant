@@ -1,0 +1,55 @@
+            </div> <!-- End content-body -->
+        </main>
+    </div>
+
+    <script>
+        async function resetConnection() {
+            if (confirm('Are you sure you want to remove the current connection? You will need to re-scan the QR code.')) {
+                const res = await fetch('/api/connection/reset', { method: 'POST' });
+                if (res.ok) { location.reload(); }
+            }
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+            }
+        }
+
+        // Global Connection Polling
+        let lastStatus = '<%= connection.status %>';
+        setInterval(async () => {
+            try {
+                const res = await fetch('/api/connection');
+                const data = await res.json();
+
+                document.querySelectorAll('.status-dot').forEach(dot => {
+                    dot.className = `status-dot status-${data.status.replace('_','').replace(/ /g,'')}`;
+                });
+                document.querySelectorAll('.status-text').forEach(t => { t.innerText = data.status; });
+
+                // QR Refresh Logic
+                const qrContainer = document.getElementById('qr-container');
+                const qrImage = document.getElementById('qr-image');
+                if (qrContainer && qrImage) {
+                    if (data.status === 'SCANNING_REQUIRED' && data.qrDataUrl) {
+                        qrContainer.style.display = 'flex';
+                        qrImage.src = data.qrDataUrl;
+                    } else if (data.status === 'CONNECTED') {
+                        qrContainer.style.display = 'none';
+                    }
+                }
+
+                if (lastStatus !== 'CONNECTED' && data.status === 'CONNECTED') {
+                    location.reload();
+                }
+                lastStatus = data.status;
+            } catch(e) {}
+        }, 5000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | Follow-up AI</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/main.css?v=11">
+</head>
+<body style="display:block; overflow:auto; height:auto;">
+<div class="login-page">
+    <div class="login-card">
+        <div class="logo" style="justify-content:center; margin-bottom:1.25rem;">
+            <div class="logo-badge">🚀</div>
+            <div>
+                <span class="logo-text">Follow-up AI</span>
+                <span class="logo-sub">WhatsApp Agent</span>
+            </div>
+        </div>
+        <h1 style="font-family:'Outfit',sans-serif; font-size:1.2rem; font-weight:800; text-align:center; margin-bottom:0.2rem;">Welcome back</h1>
+        <p class="subtitle" style="font-size:0.75rem; color:var(--text-muted); text-align:center; margin-bottom:1.25rem;">Sign in to your dashboard</p>
+
+        <% if(error) { %>
+            <div class="alert-error"><%= error %></div>
+        <% } %>
+
+        <form action="/login" method="POST">
+            <label class="input-label">Username</label>
+            <input type="text" name="username" placeholder="admin" required autofocus autocomplete="username">
+            <label class="input-label">Password</label>
+            <input type="password" name="password" placeholder="••••••••" required autocomplete="current-password">
+            <button type="submit" class="btn btn-primary" style="width:100%; margin-top:0.25rem;">Sign In →</button>
+        </form>
+
+        <p style="text-align:center; font-size:0.68rem; color:var(--text-subtle); margin-top:1.25rem;">
+            Default: <code style="background:var(--bg-base); padding:0.1rem 0.3rem; border-radius:3px;">admin</code> / <code style="background:var(--bg-base); padding:0.1rem 0.3rem; border-radius:3px;">admin123</code>
+        </p>
+    </div>
+</div>
+</body>
+</html>

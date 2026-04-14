@@ -1,0 +1,98 @@
+<%- include('partials/head') %>
+
+<!-- Boss Status + Send Now -->
+<div class="two-col" style="margin-bottom:0;">
+    <div class="glass-card" style="margin-bottom:0;">
+        <h2><span class="card-icon">👑</span> Boss Configuration</h2>
+        <% if(boss) { %>
+            <div style="display:flex; align-items:center; gap:0.75rem; padding:0.75rem; background:var(--bg-base); border-radius:var(--radius); border:1px solid var(--border);">
+                <div class="avatar-circle" style="width:38px;height:38px;font-size:0.8rem;flex-shrink:0;"><%= boss.Name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase() %></div>
+                <div>
+                    <div style="font-weight:700; font-size:0.875rem;"><%= boss.Name %></div>
+                    <div style="font-size:0.72rem; color:var(--text-muted);"><%= boss.PhoneNumber %></div>
+                </div>
+                <span class="role-badge role-Boss" style="margin-left:auto;">👑 Boss</span>
+            </div>
+            <div style="margin-top:0.875rem;">
+                <form action="/boss/send-report" method="POST">
+                    <button type="submit" class="btn btn-primary" style="width:100%;" onclick="return confirm('Send Boss Report now via WhatsApp?')">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                        Send Report to Boss Now
+                    </button>
+                </form>
+            </div>
+        <% } else { %>
+            <div style="padding:1.5rem; text-align:center; color:var(--text-muted);">
+                <div style="font-size:2rem; margin-bottom:0.5rem;">👑</div>
+                <div style="font-size:0.82rem; margin-bottom:0.5rem;">No Boss configured yet.</div>
+                <div style="font-size:0.72rem;">Go to <a href="/people" style="color:var(--primary);">Contacts</a> and set a person's Role to <strong>Boss</strong>.</div>
+            </div>
+        <% } %>
+    </div>
+
+    <!-- Team Hierarchy -->
+    <div class="glass-card" style="margin-bottom:0;">
+        <h2><span class="card-icon">🏢</span> Team Hierarchy</h2>
+        <% const heads = people.filter(p => p.Role === 'Head'); %>
+        <% const members = people.filter(p => p.Role === 'Member'); %>
+        <% const bossP = people.find(p => p.Role === 'Boss'); %>
+        <div style="display:flex; flex-direction:column; gap:0.4rem;">
+            <% if(bossP) { %>
+                <div style="display:flex; align-items:center; gap:0.5rem; padding:0.45rem 0.625rem; background:#fef3c7; border:1px solid #fde68a; border-radius:var(--radius-sm);">
+                    <div class="avatar-circle" style="width:22px;height:22px;font-size:0.55rem;"><%= bossP.Name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase() %></div>
+                    <span style="font-size:0.78rem; font-weight:600;"><%= bossP.Name %></span>
+                    <span class="role-badge role-Boss" style="margin-left:auto;">Boss</span>
+                </div>
+            <% } %>
+            <% heads.forEach(head => { %>
+                <div style="display:flex; align-items:center; gap:0.5rem; padding:0.45rem 0.625rem 0.45rem 1.25rem; background:var(--info-bg); border:1px solid #bfdbfe; border-radius:var(--radius-sm);">
+                    <div class="avatar-circle" style="width:22px;height:22px;font-size:0.55rem;"><%= head.Name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase() %></div>
+                    <span style="font-size:0.78rem; font-weight:600;"><%= head.Name %></span>
+                    <span class="role-badge role-Head" style="margin-left:auto;">Head</span>
+                </div>
+                <% members.filter(m => m.ReportsToId == head.Id).forEach(m => { %>
+                    <div style="display:flex; align-items:center; gap:0.5rem; padding:0.4rem 0.625rem 0.4rem 2.5rem; background:var(--bg-base); border:1px solid var(--border); border-radius:var(--radius-sm);">
+                        <div class="avatar-circle" style="width:20px;height:20px;font-size:0.5rem;"><%= m.Name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase() %></div>
+                        <span style="font-size:0.75rem;"><%= m.Name %></span>
+                    </div>
+                <% }) %>
+            <% }) %>
+            <% const ungrouped = members.filter(m => !m.ReportsToId); %>
+            <% if(ungrouped.length > 0) { %>
+                <div style="font-size:0.65rem; color:var(--text-subtle); text-transform:uppercase; letter-spacing:0.06em; margin-top:0.25rem; padding-left:0.375rem;">Ungrouped (<%= ungrouped.length %>)</div>
+                <% ungrouped.forEach(m => { %>
+                    <div style="display:flex; align-items:center; gap:0.5rem; padding:0.4rem 0.625rem; background:var(--bg-base); border:1px solid var(--border); border-radius:var(--radius-sm);">
+                        <div class="avatar-circle" style="width:20px;height:20px;font-size:0.5rem;"><%= m.Name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase() %></div>
+                        <span style="font-size:0.75rem;"><%= m.Name %></span>
+                    </div>
+                <% }) %>
+            <% } %>
+        </div>
+    </div>
+</div>
+
+<!-- Report History -->
+<div class="glass-card" style="margin-top:1rem;">
+    <h2>
+        <span class="card-icon">📊</span>
+        Report History
+        <span style="margin-left:auto; font-size:0.72rem; font-weight:500; color:var(--text-muted);"><%= reports.length %> reports</span>
+    </h2>
+    <% if(reports.length === 0) { %>
+        <div class="empty-state">No reports sent yet. Click "Send Report to Boss Now" to generate the first one.</div>
+    <% } %>
+    <% reports.forEach(r => { %>
+        <div class="report-card">
+            <div class="report-card-header">
+                <span>
+                    <% const trigLabels = { manual: '👆 Manual', cron: '⏰ Scheduled', scrum: '🔄 Post-Scrum' }; %>
+                    <%= trigLabels[r.TriggeredBy] || r.TriggeredBy %>
+                </span>
+                <span><%= new Date(r.SentAt).toLocaleString([], {weekday:'short', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'}) %></span>
+            </div>
+            <pre style="white-space:pre-wrap; word-break:break-word; font-size:0.75rem; color:var(--text-muted); font-family:'Inter',sans-serif; max-height:120px; overflow-y:auto; line-height:1.6;"><%= r.ReportText %></pre>
+        </div>
+    <% }) %>
+</div>
+
+<%- include('partials/foot') %>
